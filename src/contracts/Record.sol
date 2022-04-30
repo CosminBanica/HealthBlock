@@ -7,8 +7,8 @@ contract Record {
     string public timestamp;
     string public link;
 
-    constructor(address _patient, address _doctor, string memory _timestamp, string memory _link) public {
-        institution = msg.sender;
+    constructor(address _institution, address _patient, address _doctor, string memory _timestamp, string memory _link) public {
+        institution = _institution;
         patient = _patient;
         doctor = _doctor;
         timestamp = _timestamp;
