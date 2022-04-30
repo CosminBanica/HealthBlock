@@ -51,5 +51,20 @@ contract('HealthBlock', ([owner, patient, institution, doctor]) => {
             result = await healthBlock.institutionLink(institution)
             assert.equal(result.toString(), 'fakelink.com', 'institution link is correct')
         })
+
+        it('registers doctor', async () => {
+            let result
+
+            // Check doctor is not registered before registering
+            result = await healthBlock.isDoctor(doctor)
+            assert.equal(result.toString(), 'false', 'doctor is registered before registering')
+
+            // Register doctor
+            await healthBlock.registerDoctor({ from: doctor })
+
+            // Check doctor is registered after registering
+            result = await healthBlock.isDoctor(doctor)
+            assert.equal(result.toString(), 'true', 'doctor is registered after registering')
+        })
     })
 })

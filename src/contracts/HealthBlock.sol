@@ -39,4 +39,13 @@ contract HealthBlock {
         }
     }
 
+    // Register doctor
+    function registerDoctor() public {
+        // Add user to doctors array if not an institution or existing doctor
+        if (!isInstitution[msg.sender] && !isDoctor[msg.sender]) {
+            isDoctor[msg.sender] = true;
+            doctors.push(msg.sender);
+        }
+    }
+
 }
