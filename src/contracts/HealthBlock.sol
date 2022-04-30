@@ -3,17 +3,20 @@ pragma solidity >=0.4.21 <0.6.0;
 import "./Record.sol";
 
 contract HealthBlock {
+    struct Institution {
+        address institutionAddress;
+        string name;
+        string link;
+    }
+
     string public name = "HealthBlock";
 
-    address[] public institutions;
+    Institution[] public institutions;
     address[] public patients;
     address[] public doctors;
     mapping(address => bool) public isInstitution;
     mapping(address => bool) public isPatient;
     mapping(address => bool) public isDoctor;
-    mapping(address => string) public institutionName;
-    mapping(address => string) public institutionLink;
-
 
     constructor() public {
 
@@ -33,9 +36,7 @@ contract HealthBlock {
         // Add user to institutions array if not a patient/doctor or existing institution
         if (!isInstitution[msg.sender] && !isPatient[msg.sender] && !isDoctor[msg.sender]) {
             isInstitution[msg.sender] = true;
-            institutions.push(msg.sender);
-            institutionName[msg.sender] = _name;
-            institutionLink[msg.sender] = _link;
+            institutions.push(Institution({institutionAddress: msg.sender, name: _name, link: _link}));
         }
     }
 
