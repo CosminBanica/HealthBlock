@@ -11,6 +11,7 @@ contract HealthBlock {
     struct Record {
         address institution;
         address doctor;
+        address patient;
         string timestamp;
         string link;
     }
@@ -25,6 +26,7 @@ contract HealthBlock {
     mapping(address => bool) public isDoctor;
     mapping(address => address[]) public accessList;
     mapping(address => Record[]) public records;
+    mapping(address => address[]) public entityHasAccessTo;
 
     // Register patient
     function registerPatient() public {
@@ -65,10 +67,9 @@ contract HealthBlock {
         // Should also check timestamp and link
 
         // Add record to records array if patient and doctor are valid
-        records[patient].push(Record({institution: msg.sender, doctor: doctor, timestamp: timestamp, link: link}));
+        records[patient].push(Record({institution: msg.sender, doctor: doctor, patient: patient, timestamp: timestamp, link: link}));
     }
 
-    // MUST CHECK NOT TO ADD TWICE
     // Share patient records with institution/doctor
     function shareRecords(address entity) public {
         // Only patients can call this function
@@ -77,8 +78,20 @@ contract HealthBlock {
         // Can only share record with institution/doctor
         require(isInstitution[entity] || isDoctor[entity], "can only share with institution/doctor");
 
-        // Add entity to user access list
-        accessList[msg.sender].push(entity);
+        // Add entity to user access list *if* not already in list
+        address[] memory patientAccList = accessList[msg.sender];
+        bool inList = false;
+
+        for (uint i = 0; i < patientAccList.length; i++) {
+            if (patientAccList[i] == entity) {
+                inList = true;
+            }
+        }
+
+        if (inList == false) {
+            accessList[msg.sender].push(entity);
+            entityHasAccessTo[entity].push(msg.sender);
+        }
     }
 
     // Return patient records if caller has access
@@ -96,9 +109,36 @@ contract HealthBlock {
             }
         }
 
-        require(false, "caller is not in patient access list");
+        // If caller not in patient access list, return empty list
+        Record[] memory emptyReturn; 
+        return emptyReturn;
     }
 
-    // Return all patient records to which caller has access
+    // Return all patient records to which caller has access !!! Costs a lot of gas and should only be used for debugging
+    function getAllRecords() public view returns(Record[] memory){
+        // Only institution and doctors can call this function
+        require(isInstitution[msg.sender] || isDoctor[msg.sender], "caller must be institution/doctor");
+
+        // Array containing all records
+        Record[] memory retRecords;
+        address[] memory entityAccess = entityHasAccessTo[msg.sender];
+
+        for (uint i = 0; i < entityAccess.length; i++) {
+            Record[] memory patientRecords = records[entityAccess[i]];
+            Record[] memory auxRecords = retRecords;
+
+            retRecords = new Record[](auxRecords.length + patientRecords.length);
+
+            for (uint j = 0; j < auxRecords.length; j++) {
+                retRecords[j] = auxRecords[j];
+            }
+
+            for (uint j = 0; j < patientRecords.length; j++) {
+                retRecords[j + auxRecords.length] = patientRecords[j];
+            }
+        }
+
+        return retRecords;
+    }
 
 }
