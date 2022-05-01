@@ -6,7 +6,7 @@ require('chai')
     .use(require('chai-as-promised'))
     .should()
 
-contract('HealthBlock', ([owner, patient, institution, doctor, doctor2]) => {
+contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2]) => {
     let healthBlock
 
     before(async () => {
@@ -14,7 +14,6 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2]) => {
         healthBlock = await HealthBlock.new()
     })
 
-    // Write tests here
     describe('HealthBlock basic functionality', async () => {
         it('registers patient', async () => {
             let result
@@ -78,7 +77,9 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2]) => {
             assert.equal(result.timestamp, '11/21/11/12:00:01', 'institution in record is correct')
             assert.equal(result.link, 'record.link.com', 'institution in record is correct')
         })
+    })
 
+    describe('HealthBlock access list behaviour', async () => {
         it ('adds institution and doctor to access list', async () => {
             let result
 
@@ -93,9 +94,7 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2]) => {
             result = await healthBlock.accessList(patient, 1)
             assert.equal(result, doctor, 'doctor is in access list')
         })
-    })
 
-    describe('HealthBlock records management', async () => {
         it ('returns one patient records to which caller has access', async () => {
             let result
 
@@ -112,18 +111,90 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2]) => {
 
         it ('returns all patient records to which caller has access', async () => {
             let result
+            
+            // Register additional patient
+            await healthBlock.registerPatient({ from: patient2 })
 
-            // Add 2 more records
+            // Add 4 more records
             await healthBlock.addRecord(patient, doctor, '16/05/11/09:40:39', 'new.link.com', { from: institution })
             await healthBlock.addRecord(patient, doctor2, '12/03/12/15:44:42', 'helloworld.link.com', { from: institution })
+            await healthBlock.addRecord(patient2, doctor, '03/05/09/01:45:22', 'patient2.link.com', { from: institution })
+            await healthBlock.addRecord(patient2, doctor2, '12/06/13/17:22:54', 'anotherone.link.com', { from: institution })
+
+            // Add institution to second patient access list
+            await healthBlock.shareRecords(institution, { from: patient2 })
 
             // Check that only institution receives all records
             result = await healthBlock.getAllRecords({ from: institution })
             assert.equal(result[1].timestamp, '16/05/11/09:40:39', 'institution received all records that it has access to')
             assert.equal(result[2].timestamp, '12/03/12/15:44:42', 'institution received all records that it has access to')
+            assert.equal(result[3].timestamp, '03/05/09/01:45:22', 'institution received all records that it has access to')
+            assert.equal(result[4].timestamp, '12/06/13/17:22:54', 'institution received all records that it has access to')
 
             result = await healthBlock.getAllRecords({ from: doctor2 })
+            assert.equal(result.length, 0, 'doctor2 received no records')
+        })
+
+        it ('removes entity from access list', async () => {
+            let result
+
+            // Add doctor2 to patients access list
+            await healthBlock.shareRecords(doctor2, { from: patient })
+            await healthBlock.shareRecords(doctor2, { from: patient2 })
+
+            // Check that institution and both doctors are in patient access list
+            result = await healthBlock.accessList(patient, 0)
+            assert.equal(result, institution, 'institution is in access list')
+
+            result = await healthBlock.accessList(patient, 1)
+            assert.equal(result, doctor, 'doctor is in access list')
+
+            result = await healthBlock.accessList(patient, 2)
+            assert.equal(result, doctor2, 'doctor is in access list')
+
+            // Remove doctor from patient access list
+            await healthBlock.unshareRecords(doctor, { from: patient })
+
+            // Check that only doctor has been removed from patient access list
+            result = await healthBlock.accessList(patient, 0)
+            assert.equal(result, institution, 'institution is in access list')
+
+            result = await healthBlock.accessList(patient, 1)
+            assert.equal(result, doctor2, 'doctor is in access list')
+
+            // Check that only doctor no longer receives records (check for getAllRecords)
+            result = await healthBlock.getAllRecords({ from: institution })
+            assert.equal(result[1].timestamp, '16/05/11/09:40:39', 'institution received all records that it has access to')
+            assert.equal(result[2].timestamp, '12/03/12/15:44:42', 'institution received all records that it has access to')
+            assert.equal(result[3].timestamp, '03/05/09/01:45:22', 'institution received all records that it has access to')
+            assert.equal(result[4].timestamp, '12/06/13/17:22:54', 'institution received all records that it has access to')
+
+            result = await healthBlock.getAllRecords({ from: doctor })
             assert.equal(result.length, 0, 'doctor received no records')
+
+            result = await healthBlock.getAllRecords({ from: doctor2 })
+            assert.equal(result[1].timestamp, '16/05/11/09:40:39', 'doctor2 received all records that it has access to')
+            assert.equal(result[2].timestamp, '12/03/12/15:44:42', 'doctor2 received all records that it has access to')
+            assert.equal(result[3].timestamp, '03/05/09/01:45:22', 'institution received all records that it has access to')
+            assert.equal(result[4].timestamp, '12/06/13/17:22:54', 'institution received all records that it has access to')
+
+            // Check that only doctor no longer receives records (check for getRecords)
+            result = await healthBlock.getRecords(patient, { from: institution })
+            assert.equal(result[0].timestamp, '11/21/11/12:00:01', 'institution received records that it has access to')
+
+            result = await healthBlock.getRecords(patient2, { from: institution })
+            assert.equal(result[0].timestamp, '03/05/09/01:45:22', 'institution received records that it has access to')
+
+            result = await healthBlock.getRecords(patient, { from: doctor })
+            assert.equal(result.length, 0, 'doctor received no records')
+        })
+
+        it ('returns patient access list', async () => {
+
+        })
+
+        it ('returns patients to which specified entity has access', async () => {
+            
         })
     })
 })

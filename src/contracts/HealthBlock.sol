@@ -94,6 +94,62 @@ contract HealthBlock {
         }
     }
 
+    // Unshare records
+    function unshareRecords(address entity) public {
+        // Only patients can call this function
+        require(isPatient[msg.sender], "caller must be patient");
+
+        // Remove specified entity from access list
+        address[] memory patientAccList = accessList[msg.sender];
+
+        uint entityIndex = 0;
+        for (uint i = 0; i < patientAccList.length; i++) {
+            if (patientAccList[i] == entity) {
+                entityIndex = i + 1;
+                break;
+            }
+        }
+
+        if (entityIndex > 0) {
+            accessList[msg.sender][entityIndex - 1] = accessList[msg.sender][accessList[msg.sender].length - 1];
+            accessList[msg.sender].pop();
+        }
+
+        // Remove patient from entity accessable patients
+        if (entityIndex >= 0) {
+            address[] memory entityAccess = entityHasAccessTo[entity];
+            uint patientIndex = 0;
+
+            for (uint i = 0; i < entityAccess.length; i++) {
+                if (entityAccess[i] == msg.sender) {
+                    patientIndex = i + 1;
+                    break;
+                }
+            }
+
+            if (patientIndex > 0) {
+                entityHasAccessTo[entity][patientIndex - 1] = entityHasAccessTo[entity][entityHasAccessTo[entity].length - 1];
+                entityHasAccessTo[entity].pop();
+            }
+        }
+    }
+
+    // Returns access list for specified patient
+    function getPatientAccessList(address patient) public view returns(address[] memory) {
+        // Requires specified address to be registered patient
+        require(isPatient[patient], "specified address must be patient");
+
+        return accessList[patient];
+    }
+
+    // Returns patients to which institution/doctor has access
+    function getAccessablePatients(address entity) public view returns(address[] memory) {
+        // Requires specified address to be registered patient
+        require(isInstitution[entity] || isDoctor[entity], "specified address must be institution/doctor");
+
+        return entityHasAccessTo[entity];
+    }
+
     // Return patient records if caller has access
     function getRecords(address patient) public view returns(Record[] memory){
         // Only institution and doctors can call this function
@@ -140,5 +196,4 @@ contract HealthBlock {
 
         return retRecords;
     }
-
 }
