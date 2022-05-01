@@ -188,13 +188,5 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2
             result = await healthBlock.getRecords(patient, { from: doctor })
             assert.equal(result.length, 0, 'doctor received no records')
         })
-
-        it ('returns patient access list', async () => {
-
-        })
-
-        it ('returns patients to which specified entity has access', async () => {
-            
-        })
     })
 })
