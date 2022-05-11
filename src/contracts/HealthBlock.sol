@@ -64,9 +64,7 @@ contract HealthBlock {
         require(isPatient[patient], "patient must be valid");
         require(isDoctor[doctor], "doctor must be valid");
 
-        // Should also check timestamp and link
-
-        // Add record to records array if patient and doctor are valid
+        // Add record to patient records array
         records[patient].push(Record({institution: msg.sender, doctor: doctor, patient: patient, timestamp: timestamp, link: link}));
     }
 
@@ -136,10 +134,22 @@ contract HealthBlock {
 
     // Returns access list for specified patient
     function getPatientAccessList(address patient) public view returns(address[] memory) {
-        // Requires specified address to be registered patient
-        require(isPatient[patient], "specified address must be patient");
+        // If caller is specified patient return access list
+        if (patient == msg.sender) {
+            return accessList[patient];
+        }
 
-        return accessList[patient];
+        // If caller is in specified patient access list return access list
+        for (uint i = 0; i < patientAccList.length; i++) {
+            if (patientAccList[i] == msg.sender) {
+                return accessList[patient];
+            }
+        }
+
+        // If caller is not specified patient or does not have access to 
+        // that patient list then return nothing
+        Record[] memory emptyReturn; 
+        return empt;
     }
 
     // Returns patients to which institution/doctor has access
