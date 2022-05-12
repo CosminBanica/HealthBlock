@@ -1,10 +1,7 @@
 pragma solidity >=0.4.21 <0.6.0;
 pragma experimental ABIEncoderV2;
 
-/**
- * TODO Make state variables private
- * In order to limit access to certain state variables, make them private and create functions to get them
- */
+
 contract HealthBlock {
     struct Institution {
         address institutionAddress;

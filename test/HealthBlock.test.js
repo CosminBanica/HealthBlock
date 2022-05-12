@@ -6,10 +6,7 @@ require('chai')
     .use(require('chai-as-promised'))
     .should()
 
-/**
- * TODO Replace contract state variable calls with equivalent function calls
- * Since contract will make all state variables private, calling them directly will no longer work
- */
+
 contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2]) => {
     let healthBlock
 
