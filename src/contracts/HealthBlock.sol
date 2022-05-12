@@ -1,7 +1,10 @@
 pragma solidity >=0.4.21 <0.6.0;
 pragma experimental ABIEncoderV2;
 
-
+/**
+ * TODO Create functions to get private state variables
+ * Now that the state variables are private, there should be functions to get them
+ */
 contract HealthBlock {
     struct Institution {
         address institutionAddress;
