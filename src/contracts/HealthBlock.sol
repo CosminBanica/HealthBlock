@@ -1,6 +1,10 @@
 pragma solidity >=0.4.21 <0.6.0;
 pragma experimental ABIEncoderV2;
 
+/**
+ * @todo Make state variables private
+ * @body In order to limit access to certain state variables, make them private and create functions to get them
+ */
 contract HealthBlock {
     struct Institution {
         address institutionAddress;
@@ -24,9 +28,9 @@ contract HealthBlock {
     mapping(address => bool) public isInstitution;
     mapping(address => bool) public isPatient;
     mapping(address => bool) public isDoctor;
-    mapping(address => address[]) public accessList;
-    mapping(address => Record[]) public records;
-    mapping(address => address[]) public entityHasAccessTo;
+    mapping(address => address[]) private accessList;
+    mapping(address => Record[]) private records;
+    mapping(address => address[]) private entityHasAccessTo;
 
     // Register patient
     function registerPatient() public {
