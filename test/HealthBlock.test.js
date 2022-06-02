@@ -6,10 +6,6 @@ require('chai')
     .use(require('chai-as-promised'))
     .should()
 
-/**
- * TODO Replace contract state variable calls with equivalent function calls
- * Since contract will make all state variables private, calling them directly will no longer work
- */
 contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2]) => {
     let healthBlock
 
@@ -71,15 +67,22 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2
         it('adds record', async () => {
             let result
 
+            // Add institution to access list
+            await healthBlock.shareRecords(institution, { from: patient })
+
             // Add record
             await healthBlock.addRecord(patient, doctor, '11/21/11/12:00:01', 'record.link.com', { from: institution })
 
             // Check record is added properly
-            result = await healthBlock.records(patient, 0)
-            assert.equal(result.institution, institution, 'institution in record is correct')
-            assert.equal(result.doctor, doctor, 'doctor in record is correct')
-            assert.equal(result.timestamp, '11/21/11/12:00:01', 'institution in record is correct')
-            assert.equal(result.link, 'record.link.com', 'institution in record is correct')
+            result = await healthBlock.getRecords(patient, { from: institution })
+
+            assert.equal(result[0].institution, institution, 'institution in record is correct')
+            assert.equal(result[0].doctor, doctor, 'doctor in record is correct')
+            assert.equal(result[0].timestamp, '11/21/11/12:00:01', 'institution in record is correct')
+            assert.equal(result[0].link, 'record.link.com', 'institution in record is correct')
+
+            // Remove institution from access list
+            await healthBlock.unshareRecords(institution, { from: patient })
         })
     })
 
@@ -92,11 +95,11 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2
             await healthBlock.shareRecords(doctor, { from: patient })
 
             // Check that institution and doctor are in patient access list
-            result = await healthBlock.accessList(patient, 0)
-            assert.equal(result, institution, 'institution is in access list')
+            result = await healthBlock.getPatientAccessList(patient, { from: institution })
+            assert.equal(result[0], institution, 'institution is in access list')
 
-            result = await healthBlock.accessList(patient, 1)
-            assert.equal(result, doctor, 'doctor is in access list')
+            result = await healthBlock.getPatientAccessList(patient, { from: doctor })
+            assert.equal(result[1], doctor, 'doctor is in access list')
         })
 
         it ('returns one patient records to which caller has access', async () => {
@@ -147,24 +150,24 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2
             await healthBlock.shareRecords(doctor2, { from: patient2 })
 
             // Check that institution and both doctors are in patient access list
-            result = await healthBlock.accessList(patient, 0)
-            assert.equal(result, institution, 'institution is in access list')
+            result = await healthBlock.getPatientAccessList(patient, { from: institution })
+            assert.equal(result[0], institution, 'institution is in access list')
 
-            result = await healthBlock.accessList(patient, 1)
-            assert.equal(result, doctor, 'doctor is in access list')
+            result = await healthBlock.getPatientAccessList(patient, { from: doctor })
+            assert.equal(result[1], doctor, 'doctor is in access list')
 
-            result = await healthBlock.accessList(patient, 2)
-            assert.equal(result, doctor2, 'doctor is in access list')
+            result = await healthBlock.getPatientAccessList(patient, { from: doctor2 })
+            assert.equal(result[2], doctor2, 'doctor is in access list')
 
             // Remove doctor from patient access list
             await healthBlock.unshareRecords(doctor, { from: patient })
 
             // Check that only doctor has been removed from patient access list
-            result = await healthBlock.accessList(patient, 0)
-            assert.equal(result, institution, 'institution is in access list')
+            result = await healthBlock.getPatientAccessList(patient, { from: institution })
+            assert.equal(result[0], institution, 'institution is in access list')
 
-            result = await healthBlock.accessList(patient, 1)
-            assert.equal(result, doctor2, 'doctor is in access list')
+            result = await healthBlock.getPatientAccessList(patient, { from: doctor2 })
+            assert.equal(result[1], doctor2, 'doctor is in access list')
 
             // Check that only doctor no longer receives records (check for getAllRecords)
             result = await healthBlock.getAllRecords({ from: institution })

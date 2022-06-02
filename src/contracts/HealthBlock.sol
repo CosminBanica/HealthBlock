@@ -1,10 +1,6 @@
 pragma solidity >=0.4.21 <0.6.0;
 pragma experimental ABIEncoderV2;
 
-/**
- * TODO Create functions to get private state variables
- * Now that the state variables are private, there should be functions to get them
- */
 contract HealthBlock {
     struct Institution {
         address institutionAddress;
@@ -143,6 +139,9 @@ contract HealthBlock {
             return accessList[patient];
         }
 
+        // Get patient access list
+        address[] memory patientAccList = accessList[patient];
+
         // If caller is in specified patient access list return access list
         for (uint i = 0; i < patientAccList.length; i++) {
             if (patientAccList[i] == msg.sender) {
@@ -152,8 +151,8 @@ contract HealthBlock {
 
         // If caller is not specified patient or does not have access to 
         // that patient list then return nothing
-        Record[] memory emptyReturn; 
-        return empt;
+        address[] memory emptyReturn; 
+        return emptyReturn;
     }
 
     // Returns patients to which institution/doctor has access
