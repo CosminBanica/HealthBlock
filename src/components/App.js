@@ -32,7 +32,7 @@ class App extends Component {
             const healthBlock = new web3.eth.Contract(HealthBlock.abi, healthBlockData.address)
             this.setState({ healthBlock })
         } else {
-            window.alert('DaiToken contract not deployed to detected network.')
+            window.alert('HealthBlock contract not deployed to detected network.')
         }
 
         // Get accountType
