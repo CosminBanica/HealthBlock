@@ -165,6 +165,11 @@ contract HealthBlock {
 
     // Return patient records if caller has access
     function getRecords(address patient) public view returns(Record[] memory){
+        // If caller is specified patient return access list
+        if (patient == msg.sender) {
+            return records[patient];
+        }
+
         // Only institution and doctors can call this function
         require(isInstitution[msg.sender] || isDoctor[msg.sender], "caller must be institution/doctor");
 
