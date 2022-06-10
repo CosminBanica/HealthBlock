@@ -1,2 +1,4 @@
+src/abis/HealthBlock.json
+src/abis/Migrations.json
+package-lock.json
 node_modules
-src/abis/*.json

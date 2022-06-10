@@ -122,14 +122,15 @@ contract('HealthBlock', ([owner, patient, institution, doctor, doctor2, patient2
             // Register additional patient
             await healthBlock.registerPatient({ from: patient2 })
 
+            // Add institution to access lists
+            await healthBlock.shareRecords(institution, { from: patient })
+            await healthBlock.shareRecords(institution, { from: patient2 })
+
             // Add 4 more records
             await healthBlock.addRecord(patient, doctor, '16/05/11/09:40:39', 'new.link.com', { from: institution })
             await healthBlock.addRecord(patient, doctor2, '12/03/12/15:44:42', 'helloworld.link.com', { from: institution })
             await healthBlock.addRecord(patient2, doctor, '03/05/09/01:45:22', 'patient2.link.com', { from: institution })
             await healthBlock.addRecord(patient2, doctor2, '12/06/13/17:22:54', 'anotherone.link.com', { from: institution })
-
-            // Add institution to second patient access list
-            await healthBlock.shareRecords(institution, { from: patient2 })
 
             // Check that only institution receives all records
             result = await healthBlock.getAllRecords({ from: institution })
