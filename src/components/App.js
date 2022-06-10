@@ -1,9 +1,13 @@
 import React, { Component } from 'react'
 import Web3 from 'web3'
 import HealthBlock from "../abis/HealthBlock.json"
-import Navbar from './Navbar'
 import Home from './Home'
+import AccessList from './AccessList'
 import './App.css'
+import Navbar from 'react-bootstrap/Navbar'
+import Nav from 'react-bootstrap/Nav'
+import Container from 'react-bootstrap/Container'
+import logo from '../HB-logo.png'
 
 class App extends Component {
 
@@ -90,13 +94,20 @@ class App extends Component {
         })
     }
 
+    setLocation = (location) => {
+        this.setState({ loading: true })
+        this.setState({ location: location })
+        this.setState({ loading: false })
+    }
+
     constructor(props) {
         super(props)
         this.state = {
             account: '0x0',
             healthBlock: {},
             loading: true,
-            accountType: 'none'
+            accountType: 'none',
+            location: 'home'
         }
     }
 
@@ -164,20 +175,90 @@ class App extends Component {
                     </form>
                 </div>
             } else {
-                content = <Home
-                    account={this.state.account}
-                    accountType={this.state.accountType}
-                    healthBlock={this.state.healthBlock}
-                />
+                if (this.state.location === 'home') { 
+                    content = <Home
+                        account={this.state.account}
+                        accountType={this.state.accountType}
+                        healthBlock={this.state.healthBlock}
+                    />
+                }
+                if (this.state.location === 'acclist') {
+                    content = <AccessList
+                        account={this.state.account}
+                        accountType={this.state.accountType}
+                        healthBlock={this.state.healthBlock}
+                    />
+                }
             }
+        }
+
+        let navbar
+
+        if (this.state.accountType === 'patient') {
+            navbar = 
+            <Navbar bg="dark" variant="dark">
+                <Container>
+                    <Navbar.Brand href="#home">
+                        <img
+                            alt=""
+                            src={logo}
+                            width="80"
+                            height="80"
+                            className="d-inline-block align-top"
+                        />
+                    </Navbar.Brand>
+                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                    <Navbar.Collapse id="basic-navbar-nav">
+                    <Nav className="me-auto">
+                        <Nav.Link href="#home" onClick={(event) => {
+                            event.preventDefault()
+                            this.setLocation('home')
+                        }}>Home</Nav.Link>
+                        <Nav.Link href="#acclist" onClick={(event) => {
+                            event.preventDefault()
+                            this.setLocation('acclist')
+                        }}>Access list</Nav.Link>
+                        <small className="text-secondary">
+                            <small id="account">{this.state.account}</small>
+                        </small>
+                    </Nav>
+                    </Navbar.Collapse>
+                </Container>
+            </Navbar>
+        }
+
+        if (this.state.accountType === 'institution') {
+            navbar = 
+            <Navbar bg="dark" variant="dark">
+                <Container>
+                    <Navbar.Brand href="#home">
+                        <img
+                            alt=""
+                            src={logo}
+                            width="80"
+                            height="80"
+                            className="d-inline-block align-top"
+                        />
+                    </Navbar.Brand>
+                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                    <Navbar.Collapse id="basic-navbar-nav">
+                    <Nav className="me-auto">
+                        <Nav.Link href="#home" onClick={(event) => {
+                            event.preventDefault()
+                            this.setLocation('home')
+                        }}>Home</Nav.Link>
+                        <small className="text-secondary">
+                            <small id="account">{this.state.account}</small>
+                        </small>
+                    </Nav>
+                    </Navbar.Collapse>
+                </Container>
+            </Navbar>
         }
 
         return (
             <div>
-                <Navbar 
-                    account={this.state.account} 
-                    accountType={this.state.accountType}
-                />
+                {navbar}
                 <div className='container-fluid mt-5'>
                     <div className="row">
                         <main role="main" className="col-lg-12 ml-auto mr-auto" style={{ maxWidth: '600px' }}>

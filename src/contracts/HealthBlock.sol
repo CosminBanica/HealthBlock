@@ -17,7 +17,6 @@ contract HealthBlock {
     }
 
     string public name = "HealthBlock";
-
     Institution[] public institutions;
     address[] public patients;
     address[] public doctors;
@@ -30,8 +29,8 @@ contract HealthBlock {
 
     // Register patient
     function registerPatient() public {
-        // Add user to patients array if not an institution or existing patient
-        if (!isInstitution[msg.sender] && !isPatient[msg.sender]) {
+        // Add user to patients array if not an institution/doctor or existing patient
+        if (!isInstitution[msg.sender] && !isPatient[msg.sender] && !isDoctor[msg.sender]) {
             isPatient[msg.sender] = true;
             patients.push(msg.sender);
         }
@@ -48,8 +47,8 @@ contract HealthBlock {
 
     // Register doctor
     function registerDoctor() public {
-        // Add user to doctors array if not an institution or existing doctor
-        if (!isInstitution[msg.sender] && !isDoctor[msg.sender]) {
+        // Add user to doctors array if not an institution/patient or existing doctor
+        if (!isInstitution[msg.sender] && !isPatient[msg.sender] && !isDoctor[msg.sender]) {
             isDoctor[msg.sender] = true;
             doctors.push(msg.sender);
         }
@@ -60,12 +59,29 @@ contract HealthBlock {
         // Only institutions can call this function
         require(isInstitution[msg.sender], "caller must be institution");
 
-        // Patient and doctor must be valid
+        // Patient must be valid
         require(isPatient[patient], "patient must be valid");
-        require(isDoctor[doctor], "doctor must be valid");
 
-        // Add record to patient records array
-        records[patient].push(Record({institution: msg.sender, doctor: doctor, patient: patient, timestamp: timestamp, link: link}));
+        // Get patient access list
+        address[] memory patientAccList = accessList[patient];
+
+        // Caller must be in patient access list
+        for (uint i = 0; i < patientAccList.length; i++) {
+            if (patientAccList[i] == msg.sender) {
+                // If they exist, doctor must be valid
+                if (doctor != address(0)) {
+                    require(isDoctor[doctor], "doctor must be valid");
+                }
+
+                // Add record to patient records array
+                records[patient].push(Record({institution: msg.sender, doctor: doctor, 
+                                    patient: patient, timestamp: timestamp, link: link}));
+                
+                return;
+            }
+        }
+
+        require(false, "caller must be in patient access list");
     }
 
     // Share patient records with institution/doctor
@@ -114,7 +130,7 @@ contract HealthBlock {
         }
 
         // Remove patient from entity accessable patients
-        if (entityIndex >= 0) {
+        if (entityIndex > 0) {
             address[] memory entityAccess = entityHasAccessTo[entity];
             uint patientIndex = 0;
 
@@ -165,6 +181,11 @@ contract HealthBlock {
 
     // Return patient records if caller has access
     function getRecords(address patient) public view returns(Record[] memory){
+        // If caller is specified patient return access list
+        if (patient == msg.sender) {
+            return records[patient];
+        }
+
         // Only institution and doctors can call this function
         require(isInstitution[msg.sender] || isDoctor[msg.sender], "caller must be institution/doctor");
 
