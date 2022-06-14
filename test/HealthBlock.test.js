@@ -669,3 +669,164 @@ contract('HealthBlock (performance, 50 accounts)', accounts => {
         })
     })
 })
+
+contract('HealthBlock (performance, 100 accounts)', accounts => {
+    let healthBlock
+    let result
+    const gasPrice = 20
+
+    before(async () => {
+        healthBlock = await HealthBlock.new()
+    })
+
+    describe('80 patients, 18 institutions, 1 doctor', () => {
+        it('registers 80 patients', async () => {
+            let totalGas = 0
+
+            for (let i = 19; i < 99; i++) {
+                result = await healthBlock.registerPatient({ from: accounts[i] })
+                totalGas = totalGas + result.receipt.gasUsed
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+        
+        it('registers 18 institutions', async () => {
+            let totalGas = 0
+
+            for (let i = 1; i < 19; i++) {
+                result = await healthBlock.registerInstitution('FakeInstitution' + i, 'fakelink.com' + i, { from: accounts[i] })
+                totalGas = totalGas + result.receipt.gasUsed
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it('registers 1 doctor', async () => {
+            let totalGas = 0
+
+            result = await healthBlock.registerDoctor({ from: accounts[99] })
+            totalGas = totalGas + result.receipt.gasUsed
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it ('first half of patients add first half of institutions to their access lists', async () => {
+            let totalGas = 0
+
+            for (let i = 19; i < 59; i++) {
+                for (let j = 1; j < 10; j++) {
+                    result = await healthBlock.shareRecords(accounts[j], { from: accounts[i] })
+                    totalGas = totalGas + result.receipt.gasUsed
+                }
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it('second half of patients add second half of institutions to their access lists', async () => {
+            let totalGas = 0
+
+            for (let i = 59; i < 99; i++) {
+                for (let j = 10; j < 19; j++) {
+                    result = await healthBlock.shareRecords(accounts[j], { from: accounts[i] })
+                    totalGas = totalGas + result.receipt.gasUsed
+                }
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it('each patient adds doctor to their access list', async () => {
+            let totalGas = 0
+
+            for (let i = 19; i < 99; i++) {
+                result = await healthBlock.shareRecords(accounts[49], { from: accounts[i] })
+                totalGas = totalGas + result.receipt.gasUsed
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it('each institution adds records to their patients', async () => {
+            let totalGas = 0
+
+            for (let i = 1; i < 19; i++) {
+                if (i < 10) {
+                    for (let j = 19; j < 59; j++) {
+                        result = await healthBlock.addRecord(accounts[j], accounts[49], '12/03/12/15:44:42', 'FakeLink' + j, { from: accounts[i] })
+                        totalGas = totalGas + result.receipt.gasUsed
+                    }
+                } else {
+                    for (let j = 59; j < 99; j++) {
+                        result = await healthBlock.addRecord(accounts[j], accounts[49], '12/03/12/15:44:42', 'FakeLink' + j, { from: accounts[i] })
+                        totalGas = totalGas + result.receipt.gasUsed
+                    }
+                }
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it('each institution views their patients records', async () => {
+            let totalGas = 0
+
+            for (let i = 1; i < 19; i++) {
+                if (i < 10) {
+                    for (let j = 19; j < 59; j++) {
+                        result = await healthBlock.getRecords.estimateGas(accounts[j], { from: accounts[i] })
+                        totalGas = totalGas + result
+                    }
+                } else {
+                    for (let j = 59; j < 99; j++) {
+                        result = await healthBlock.getRecords.estimateGas(accounts[j], { from: accounts[i] })
+                        totalGas = totalGas + result
+                    }
+                }
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it('each patient views their records', async () => {
+            let totalGas = 0
+
+            for (let i = 19; i < 99; i++) {
+                result = await healthBlock.getRecords.estimateGas(accounts[i], { from: accounts[i] })
+                totalGas = totalGas + result
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+
+        it('all patients remove institutions from their access lists', async () => {
+            let totalGas = 0
+
+            for (let i = 19; i < 99; i++) {
+                if (i < 59) {
+                    for (let j = 1; j < 10; j++) {
+                        result = await healthBlock.unshareRecords(accounts[j], { from: accounts[i] })
+                        totalGas = totalGas + result.receipt.gasUsed
+                    }
+                } else {
+                    for (let j = 10; j < 19; j++) {
+                        result = await healthBlock.unshareRecords(accounts[j], { from: accounts[i] })
+                        totalGas = totalGas + result.receipt.gasUsed
+                    }
+                }
+            }
+
+            console.log(`GasUsed: ${totalGas}`);
+            console.log(`ETH used: ${(gasPrice * totalGas).toString()} / 1000000000 = ${(gasPrice * totalGas / 1000000000).toString()}ETH`);
+        })
+    })
+})
